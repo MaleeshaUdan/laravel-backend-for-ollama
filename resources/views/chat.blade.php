@@ -322,22 +322,56 @@
                     body: JSON.stringify({ content, model })
                 });
                 
-                const data = await res.json();
-                
                 document.getElementById(loadingId).remove();
                 
-                if (data.error) {
-                    appendMessage('assistant', `<div class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg flex items-start gap-3"><svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><div>${data.error}</div></div>`, true);
+                if (!res.ok) {
+                    appendMessage('assistant', `<div class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg flex items-start gap-3"><svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><div>Server Error</div></div>`, true);
                 } else {
-                    appendMessage('assistant', data.content);
-                    // Update list name if it's "New Chat"
-                    let activeBtn = document.querySelector(`.session-btn[data-id="${currentSessionId}"]`);
-                    if (activeBtn && activeBtn.querySelector('span').textContent.trim() === 'New Chat') {
-                        activeBtn.querySelector('span').textContent = content.substring(0, 30) + '...';
+                    const contentDiv = appendMessage('assistant', '<div class="flex space-x-1.5 items-center h-6 px-1"><div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-[bounce_1s_infinite]"></div></div>', true);
+                    
+                    let fullContent = '';
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    let isStreaming = true;
+                    
+                    while (isStreaming) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        let lines = buffer.split('\n');
+                        buffer = lines.pop(); // Keep incomplete line in buffer
+                        
+                        for (let line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    if (data.error) {
+                                        contentDiv.innerHTML = `<div class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg flex">${data.error}</div>`;
+                                    } else if (data.message && data.message.content) {
+                                        fullContent += data.message.content;
+                                        contentDiv.innerHTML = parseMarkdown(fullContent);
+                                        scrollToBottom();
+                                    }
+                                    
+                                    if (data.done) {
+                                        isStreaming = false;
+                                        let activeBtn = document.querySelector(`.session-btn[data-id="${currentSessionId}"]`);
+                                        if (activeBtn && activeBtn.querySelector('span').textContent.trim() === 'New Chat') {
+                                            activeBtn.querySelector('span').textContent = content.substring(0, 30) + '...';
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Parse error:', e, line);
+                                }
+                            }
+                        }
                     }
                 }
             } catch (e) {
-                document.getElementById(loadingId).remove();
+                const l = document.getElementById(loadingId);
+                if (l) l.remove();
                 appendMessage('assistant', `<div class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg flex items-start gap-3"><svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><div>Request failed. Is your local Ollama running?</div></div>`, true);
             }
 
@@ -353,6 +387,7 @@
             
             contentDiv.innerHTML = skipParse ? text : (role === 'user' ? text.replace(/\n/g, '<br/>') : parseMarkdown(text));
             chatHistory.appendChild(template);
+            return contentDiv;
         }
 
         function appendLoading(id) {
