@@ -19,9 +19,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
     ];
+
+    public function chatSessions()
+    {
+        return $this->hasMany(ChatSession::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
