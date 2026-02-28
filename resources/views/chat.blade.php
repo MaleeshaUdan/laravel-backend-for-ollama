@@ -108,7 +108,13 @@
         <div class="flex-shrink-0 h-9 w-9 mt-1 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm mr-4 relative">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
         </div>
-        <div class="bg-slate-800/80 text-slate-200 border border-slate-700/80 rounded-2xl rounded-tl-sm px-6 py-4 text-[15px] leading-relaxed shadow-sm max-w-[80%] md:max-w-[85%] break-words prose prose-invert prose-indigo prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 html-content"></div>
+        <div class="relative bg-slate-800/80 text-slate-200 border border-slate-700/80 rounded-2xl rounded-tl-sm px-6 py-4 pb-10 text-[15px] leading-relaxed shadow-sm max-w-[80%] md:max-w-[85%] break-words prose prose-invert prose-indigo prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700">
+            <div class="html-content"></div>
+            <button class="copy-btn absolute bottom-2 right-2 p-1.5 text-slate-400 hover:text-indigo-400 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-all opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-[11px] font-medium tracking-wide border border-transparent hover:border-slate-600/50" title="Copy text">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Copy
+            </button>
+        </div>
     </div>
 </template>
 
@@ -454,6 +460,27 @@
             const contentDiv = template.querySelector('.html-content');
             
             contentDiv.innerHTML = skipParse ? text : (role === 'user' ? text.replace(/\n/g, '<br/>') : parseMarkdown(text));
+            
+            if (role === 'assistant') {
+                const btn = template.querySelector('.copy-btn');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        const rawText = contentDiv.innerText;
+                        navigator.clipboard.writeText(rawText).then(() => {
+                            const originalHTML = btn.innerHTML;
+                            btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>Copied`;
+                            btn.classList.add('text-emerald-400');
+                            btn.classList.remove('text-slate-400');
+                            setTimeout(() => {
+                                btn.innerHTML = originalHTML;
+                                btn.classList.remove('text-emerald-400');
+                                btn.classList.add('text-slate-400');
+                            }, 2000);
+                        });
+                    });
+                }
+            }
+            
             chatHistory.appendChild(template);
             return contentDiv;
         }
