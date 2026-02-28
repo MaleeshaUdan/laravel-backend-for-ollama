@@ -27,10 +27,16 @@
         </div>
         <div class="flex-1 overflow-y-auto px-3 space-y-1 custom-scrollbar pb-4" id="sessionList">
             @foreach($sessions as $session)
-                <button data-id="{{ $session->id }}" class="session-btn group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all {{ $loop->first ? 'bg-slate-800 text-white font-medium' : '' }}">
-                    <svg class="w-4 h-4 shrink-0 opacity-50 {{ $loop->first ? 'text-indigo-400 opacity-100' : 'group-hover:text-indigo-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    <span class="truncate text-left w-full">{{ $session->name }}</span>
-                </button>
+                <div data-id="{{ $session->id }}" class="session-wrapper relative group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all {{ $loop->first ? 'bg-slate-800 text-white font-medium active' : '' }}">
+                    <button class="session-btn group-2 flex-1 flex items-center gap-3 truncate border-none outline-none bg-transparent">
+                        <svg class="w-4 h-4 shrink-0 transition-opacity {{ $loop->first ? 'text-indigo-400 opacity-100' : 'opacity-50 group-hover:text-indigo-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        <span class="truncate text-left w-full pointer-events-none">{{ $session->name }}</span>
+                    </button>
+                    <div class="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 px-1 rounded-md">
+                        <button class="rename-btn p-1 text-slate-400 hover:text-indigo-400" title="Rename"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button class="delete-btn p-1 text-slate-400 hover:text-red-400" title="Delete"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                </div>
             @endforeach
         </div>
     </div>
@@ -49,6 +55,7 @@
                 <div class="relative ml-2">
                     <select id="modelSelect" class="appearance-none bg-slate-800/80 border border-slate-700/80 rounded-lg text-xs font-medium text-slate-300 py-1.5 pl-3 pr-8 hover:bg-slate-800 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer outline-none transition">
                         <option value="tinyllama" selected>tinyllama</option>
+                        <option value="llama3.2:3b">llama3.2:3b</option>
                         <option value="llama3">llama3</option>
                         <option value="llama2">llama2</option>
                         <option value="mistral">mistral</option>
@@ -218,49 +225,110 @@
             currentSessionId = session.id;
             
             // Reset active states
-            document.querySelectorAll('.session-btn').forEach(b => {
-                b.classList.remove('bg-slate-800', 'text-white', 'font-medium');
+            document.querySelectorAll('.session-wrapper').forEach(b => {
+                b.classList.remove('bg-slate-800', 'text-white', 'font-medium', 'active');
                 b.classList.add('hover:bg-slate-800/60', 'text-slate-400');
-                b.querySelector('svg')?.classList?.remove('text-indigo-400', 'opacity-100');
-                b.querySelector('svg')?.classList?.add('opacity-50', 'group-hover:text-indigo-400');
+                b.querySelector('.session-btn svg')?.classList?.remove('text-indigo-400', 'opacity-100');
+                b.querySelector('.session-btn svg')?.classList?.add('opacity-50', 'group-hover:text-indigo-400');
             });
             
-            const btn = document.createElement('button');
-            btn.className = 'session-btn group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white bg-slate-800 font-medium transition-all';
-            btn.dataset.id = session.id;
-            btn.innerHTML = `
-                <svg class="w-4 h-4 shrink-0 text-indigo-400 opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                <span class="truncate text-left w-full">${session.name}</span>
+            const div = document.createElement('div');
+            div.className = 'session-wrapper relative group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-white bg-slate-800 font-medium active transition-all';
+            div.dataset.id = session.id;
+            div.innerHTML = `
+                <button class="session-btn group-2 flex-1 flex items-center gap-3 truncate border-none outline-none bg-transparent">
+                    <svg class="w-4 h-4 shrink-0 text-indigo-400 opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <span class="truncate text-left w-full pointer-events-none">${session.name}</span>
+                </button>
+                <div class="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 px-1 rounded-md">
+                    <button class="rename-btn p-1 text-slate-400 hover:text-indigo-400" title="Rename"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                    <button class="delete-btn p-1 text-slate-400 hover:text-red-400" title="Delete"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                </div>
             `;
             
-            btn.addEventListener('click', () => {
-                swapActiveMenuNode(btn);
+            div.querySelector('.session-btn').addEventListener('click', () => {
+                swapActiveMenuNode(div);
                 loadSession(session.id);
             });
-            sessionList.prepend(btn);
+            attachActionListeners(div);
+            sessionList.prepend(div);
             
             renderEmptyState();
             chatInput.focus();
         });
 
-        function swapActiveMenuNode(activeBtn) {
-            document.querySelectorAll('.session-btn').forEach(b => {
-                b.classList.remove('bg-slate-800', 'text-white', 'font-medium');
+        function swapActiveMenuNode(activeDiv) {
+            document.querySelectorAll('.session-wrapper').forEach(b => {
+                b.classList.remove('bg-slate-800', 'text-white', 'font-medium', 'active');
                 b.classList.add('hover:bg-slate-800/60', 'text-slate-400');
-                b.querySelector('svg')?.classList?.remove('text-indigo-400', 'opacity-100');
-                b.querySelector('svg')?.classList?.add('opacity-50', 'group-hover:text-indigo-400');
+                b.querySelector('.session-btn svg')?.classList?.remove('text-indigo-400', 'opacity-100');
+                b.querySelector('.session-btn svg')?.classList?.add('opacity-50', 'group-hover:text-indigo-400');
             });
-            activeBtn.classList.remove('hover:bg-slate-800/60', 'text-slate-400');
-            activeBtn.classList.add('bg-slate-800', 'text-white', 'font-medium');
-            activeBtn.querySelector('svg')?.classList?.remove('opacity-50', 'group-hover:text-indigo-400');
-            activeBtn.querySelector('svg')?.classList?.add('text-indigo-400', 'opacity-100');
+            activeDiv.classList.remove('hover:bg-slate-800/60', 'text-slate-400');
+            activeDiv.classList.add('bg-slate-800', 'text-white', 'font-medium', 'active');
+            activeDiv.querySelector('.session-btn svg')?.classList?.remove('opacity-50', 'group-hover:text-indigo-400');
+            activeDiv.querySelector('.session-btn svg')?.classList?.add('text-indigo-400', 'opacity-100');
         }
 
-        document.querySelectorAll('.session-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                swapActiveMenuNode(btn);
-                loadSession(btn.dataset.id);
+        function clearActiveSession() {
+            currentSessionId = null;
+            document.querySelectorAll('.session-wrapper').forEach(b => b.remove());
+            renderEmptyState();
+        }
+
+        function attachActionListeners(wrapper) {
+            const id = wrapper.dataset.id;
+            
+            wrapper.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this chat?')) {
+                    try {
+                        const res = await fetch(`/api/sessions/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': csrfToken }
+                        });
+                        if (res.ok) {
+                            wrapper.remove();
+                            if (currentSessionId == id) {
+                                const nextWrapper = document.querySelector('.session-wrapper');
+                                if (nextWrapper) {
+                                    nextWrapper.querySelector('.session-btn').click();
+                                } else {
+                                    clearActiveSession();
+                                }
+                            }
+                        }
+                    } catch (err) { console.error('Delete failed:', err); }
+                }
             });
+
+            wrapper.querySelector('.rename-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const span = wrapper.querySelector('.session-btn span');
+                const currentName = span.textContent;
+                const newName = prompt('Rename this chat:', currentName);
+                
+                if (newName && newName.trim() !== '' && newName !== currentName) {
+                    try {
+                        const res = await fetch(`/api/sessions/${id}`, {
+                            method: 'PUT',
+                            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newName.trim() })
+                        });
+                        if (res.ok) {
+                            span.textContent = newName.trim();
+                        }
+                    } catch (err) { console.error('Rename failed:', err); }
+                }
+            });
+        }
+
+        document.querySelectorAll('.session-wrapper').forEach(wrapper => {
+            wrapper.querySelector('.session-btn').addEventListener('click', () => {
+                swapActiveMenuNode(wrapper);
+                loadSession(wrapper.dataset.id);
+            });
+            attachActionListeners(wrapper);
         });
 
         async function loadSession(id) {
@@ -357,9 +425,9 @@
                                     
                                     if (data.done) {
                                         isStreaming = false;
-                                        let activeBtn = document.querySelector(`.session-btn[data-id="${currentSessionId}"]`);
-                                        if (activeBtn && activeBtn.querySelector('span').textContent.trim() === 'New Chat') {
-                                            activeBtn.querySelector('span').textContent = content.substring(0, 30) + '...';
+                                        let activeSpan = document.querySelector(`.session-wrapper[data-id="${currentSessionId}"] .session-btn span`);
+                                        if (activeSpan && activeSpan.textContent.trim() === 'New Chat') {
+                                            activeSpan.textContent = content.substring(0, 30) + (content.length > 30 ? '...' : '');
                                         }
                                     }
                                 } catch (e) {

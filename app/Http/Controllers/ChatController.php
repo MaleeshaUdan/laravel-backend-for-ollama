@@ -28,6 +28,28 @@ class ChatController extends Controller
         return response()->json($session);
     }
 
+    public function updateSession(Request $request, ChatSession $session)
+    {
+        if ($session->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate(['name' => 'required|string|max:255']);
+        $session->update(['name' => $request->name]);
+
+        return response()->json($session);
+    }
+
+    public function deleteSession(ChatSession $session)
+    {
+        if ($session->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $session->delete();
+        return response()->json(['success' => true]);
+    }
+
     public function getSessionMessages(ChatSession $session)
     {
         if ($session->user_id !== Auth::id()) {

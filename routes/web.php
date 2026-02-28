@@ -17,6 +17,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
     
     Route::post('/api/sessions', [ChatController::class, 'createSession']);
+    Route::put('/api/sessions/{session}', [ChatController::class, 'updateSession']);
+    Route::delete('/api/sessions/{session}', [ChatController::class, 'deleteSession']);
     Route::get('/api/sessions/{session}/messages', [ChatController::class, 'getSessionMessages']);
     Route::post('/api/sessions/{session}/message', [ChatController::class, 'sendMessage']);
 });
