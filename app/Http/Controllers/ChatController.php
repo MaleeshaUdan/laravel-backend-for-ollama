@@ -63,7 +63,8 @@ class ChatController extends Controller
 
         // Call Ollama
         try {
-            $response = Http::timeout(60)->post('http://localhost:11434/api/chat', [
+            $ollamaUrl = rtrim(env('OLLAMA_URL', 'http://127.0.0.1:11434'), '/');
+            $response = Http::timeout(120)->post($ollamaUrl . '/api/chat', [
                 'model' => $request->model,
                 'messages' => $history,
                 'stream' => false,
